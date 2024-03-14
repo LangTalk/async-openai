@@ -7,6 +7,7 @@ use crate::{
     },
     Client, Messages, Runs,
 };
+use crate::types::RunObjectResponseStream;
 
 /// Create threads that assistants can interact with.
 ///
@@ -36,6 +37,24 @@ impl<'c, C: Config> Threads<'c, C> {
         request: CreateThreadAndRunRequest,
     ) -> Result<RunObject, OpenAIError> {
         self.client.post("/threads/runs", request).await
+    }
+
+    /// Create a thread and run it in one request.
+    ///
+    /// partial message deltas will be sent regarding the thread that is running
+    pub async fn create_and_run_stream(
+        &self,
+        mut request: CreateThreadAndRunRequest,
+    ) -> Result<RunObjectResponseStream, OpenAIError> {
+        if request.stream.is_some() && !request.stream.unwrap() {
+            return Err(OpenAIError::InvalidArgument(
+                "When stream is false, use Threads::create_and_run".into(),
+            ));
+        }
+
+        request.stream = Some(true);
+
+        Ok(self.client.post_stream("/threads/runs", request).await)
     }
 
     /// Create a thread.

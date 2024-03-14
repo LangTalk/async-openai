@@ -1,11 +1,17 @@
 use std::collections::HashMap;
+use std::pin::Pin;
 
 use derive_builder::Builder;
+use futures::Stream;
 use serde::{Deserialize, Serialize};
 
 use crate::{error::OpenAIError, types::FunctionCall};
 
-use super::AssistantTools;
+use super::{AssistantTools, CreateChatCompletionStreamResponse};
+
+/// Parsed server side events stream until an \[DONE\] is received from server.
+pub type RunObjectResponseStream =
+Pin<Box<dyn Stream<Item = Result<RunObject, OpenAIError>> + Send>>;
 
 /// Represents an execution run on a [thread](https://platform.openai.com/docs/api-reference/threads).
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq)]
@@ -143,6 +149,10 @@ pub struct CreateRunRequest {
     pub tools: Option<Vec<AssistantTools>>,
 
     pub metadata: Option<HashMap<String, serde_json::Value>>,
+
+    /// If true, returns a stream of events that happen during the Run as server-sent events
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<bool>,
 }
 
 #[derive(Clone, Serialize, Default, Debug, Deserialize, PartialEq)]

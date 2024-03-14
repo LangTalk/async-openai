@@ -76,4 +76,8 @@ pub struct CreateThreadAndRunRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<HashMap<String, serde_json::Value>>,
+
+    /// If true, returns a stream of events that happen during the Run as server-sent events
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<bool>,
 }

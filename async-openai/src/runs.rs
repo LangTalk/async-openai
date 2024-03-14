@@ -10,6 +10,7 @@ use crate::{
     },
     Client,
 };
+use crate::types::RunObjectResponseStream;
 
 /// Represents an execution run on a thread.
 ///
@@ -37,6 +38,22 @@ impl<'c, C: Config> Runs<'c, C> {
         self.client
             .post(&format!("/threads/{}/runs", self.thread_id), request)
             .await
+    }
+
+    /// Create a streaming run.
+    pub async fn create_stream(&self, mut request: CreateRunRequest) -> Result<RunObjectResponseStream, OpenAIError> {
+        if request.stream.is_some() && !request.stream.unwrap() {
+            return Err(OpenAIError::InvalidArgument(
+                "When stream is false, use Threads::create_and_run".into(),
+            ));
+        }
+
+        request.stream = Some(true);
+        Ok(
+            self.client
+            .post_stream(&format!("/threads/{}/runs", self.thread_id), request)
+            .await
+        )
     }
 
     /// Retrieves a run.
