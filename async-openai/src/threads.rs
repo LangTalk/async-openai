@@ -40,7 +40,6 @@ impl<'c, C: Config> Threads<'c, C> {
     }
 
     /// Create a thread and run it in one request.
-    ///
     /// partial message deltas will be sent regarding the thread that is running
     pub async fn create_and_run_stream(
         &self,

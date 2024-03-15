@@ -3,33 +3,60 @@ use std::pin::Pin;
 
 use derive_builder::Builder;
 use futures::Stream;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{error::OpenAIError, types::FunctionCall};
+use crate::types::ObjectStream::{ThreadCreated, ThreadMessage, ThreadMessageDelta, ThreadRun, ThreadRunStep};
 
-use super::{AssistantTools, CreateChatCompletionStreamResponse};
+use super::{AssistantTools, CreateChatCompletionStreamResponse, MessageContent};
 
 /// Parsed server side events stream until an \[DONE\] is received from server.
 pub type RunObjectResponseStream =
 Pin<Box<dyn Stream<Item = Result<RunObject, OpenAIError>> + Send>>;
+
+#[derive(Clone, Serialize, Debug, Deserialize, PartialEq)]
+pub enum ObjectStream {
+    ThreadCreated,
+    ThreadRun,
+    ThreadRunStep,
+    ThreadMessage,
+    ThreadMessageDelta,
+
+}
+
+fn deserialize_object_stream<'de, D>(deserializer: D) -> Result<ObjectStream, D::Error>
+where D: Deserializer<'de> {
+    let s: String = Deserialize::deserialize(deserializer)?;
+    match s.as_ref() {
+        "thread" => Ok(ThreadCreated),
+        "thread.run" => Ok(ThreadRun),
+        "thread.run.step" => Ok(ThreadRunStep),
+        "thread.message" => Ok(ThreadMessage),
+        "thread.message.delta" => Ok(ThreadMessageDelta),
+        _ => Err(serde::de::Error::custom("unknown object type"))
+    }
+}
 
 /// Represents an execution run on a [thread](https://platform.openai.com/docs/api-reference/threads).
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq)]
 pub struct RunObject {
     /// The identifier, which can be referenced in API endpoints.
     pub id: String,
-    /// The object type, which is always `thread.run`.
-    pub object: String,
+
+    /// The object type
+    #[serde(deserialize_with = "deserialize_object_stream")]
+    pub object: ObjectStream,
+
     /// The Unix timestamp (in seconds) for when the run was created.
-    pub created_at: i32,
+    pub created_at: Option<i32>,
     ///The ID of the [thread](https://platform.openai.com/docs/api-reference/threads) that was executed on as a part of this run.
-    pub thread_id: String,
+    pub thread_id: Option<String>,
 
     /// The ID of the [assistant](https://platform.openai.com/docs/api-reference/assistants) used for execution of this run.
     pub assistant_id: Option<String>,
 
     /// The status of the run, which can be either `queued`, `in_progress`, `requires_action`, `cancelling`, `cancelled`, `failed`, `completed`, or `expired`.
-    pub status: RunStatus,
+    pub status: Option<RunStatus>,
 
     /// Details on the action required to continue the run. Will be `null` if no action is required.
     pub required_action: Option<RequiredAction>,
@@ -48,21 +75,29 @@ pub struct RunObject {
     ///The Unix timestamp (in seconds) for when the run was completed.
     pub completed_at: Option<i32>,
 
+    /// Represents a message delta i.e. any changed fields on a message during streaming.
+    pub delta: Option<MessageDelta>,
+
     /// The model that the [assistant](https://platform.openai.com/docs/api-reference/assistants) used for this run.
-    pub model: String,
+    pub model: Option<String>,
 
     /// The instructions that the [assistant](https://platform.openai.com/docs/api-reference/assistants) used for this run.
-    pub instructions: String,
+    pub instructions: Option<String>,
 
     /// The list of tools that the [assistant](https://platform.openai.com/docs/api-reference/assistants) used for this run.
-    pub tools: Vec<AssistantTools>,
+    pub tools: Option<Vec<AssistantTools>>,
     /// The list of [File](https://platform.openai.com/docs/api-reference/files) IDs the [assistant](/docs/api-reference/assistants) used for this run.
-    pub file_ids: Vec<String>,
+    pub file_ids: Option<Vec<String>>,
 
     /// Usage statistics related to the run. This value will be `null` if the run is not in a terminal state (i.e. `in_progress`, `queued`, etc.).
     pub usage: Option<RunCompletionUsage>,
 
     pub metadata: Option<HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Clone, Serialize, Debug, Deserialize, PartialEq)]
+pub struct MessageDelta {
+    pub content: Vec<MessageContent>
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq)]

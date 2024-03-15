@@ -42,17 +42,20 @@ pub struct MessageObject {
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq)]
-#[serde(untagged)]
-pub enum MessageContent {
-    Text(MessageContentTextObject),
-    ImageFile(MessageContentImageFileObject),
+pub struct MessageContent {
+    pub r#type: String,
+    pub index: Option<i32>,
+    pub text: Option<TextData>,
+    pub image_file: Option<ImageFile>,
 }
 
 /// The text content that is part of a message.
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq)]
 pub struct MessageContentTextObject {
     /// Always `text`.
+    #[serde(rename = "type")]
     pub r#type: String,
+    pub index: Option<i32>,
     pub text: TextData,
 }
 
@@ -60,7 +63,7 @@ pub struct MessageContentTextObject {
 pub struct TextData {
     /// The data that makes up the text.
     pub value: String,
-    pub annotations: Vec<MessageContentTextAnnotations>,
+    pub annotations: Option<Vec<MessageContentTextAnnotations>>,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq)]
