@@ -47,5 +47,6 @@ pub(crate) fn map_deserialization_error(e: serde_json::Error, bytes: &[u8]) -> O
         "failed deserialization of: {}",
         String::from_utf8_lossy(bytes)
     );
+    println!("{:?}", e);
     OpenAIError::JSONDeserialize(e)
 }
