@@ -99,6 +99,7 @@ pub struct CreateTranscriptionRequest {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct CreateTranscriptionResponse {
     pub text: String,
+    pub duration: f64,
 }
 
 #[derive(Clone, Default, Debug, Builder, PartialEq, Serialize)]
@@ -155,7 +156,6 @@ pub struct CreateTranslationRequest {
 #[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
 pub struct CreateTranslationResponse {
     pub text: String,
-    pub duration: f64,
 }
 
 #[derive(Debug, Clone)]
