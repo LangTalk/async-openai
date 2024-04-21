@@ -185,9 +185,19 @@ pub struct CreateRunRequest {
 
     pub metadata: Option<HashMap<String, serde_json::Value>>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub truncation_strategy: Option<TruncationStrategy>,
+
     /// If true, returns a stream of events that happen during the Run as server-sent events
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
+}
+
+#[derive(Clone, Serialize, Default, Debug, Deserialize, PartialEq)]
+pub struct TruncationStrategy {
+    #[serde(rename = "type")]
+    pub strategy_type: String,
+    pub last_messages: u64,
 }
 
 #[derive(Clone, Serialize, Default, Debug, Deserialize, PartialEq)]
