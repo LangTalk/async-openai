@@ -8,7 +8,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::{error::OpenAIError, types::FunctionCall};
 use crate::types::ObjectStream::{ThreadCreated, ThreadMessage, ThreadMessageDelta, ThreadRun, ThreadRunStep};
 
-use super::{AssistantTools, CreateChatCompletionStreamResponse, MessageContent};
+use super::{AssistantTools, CreateChatCompletionStreamResponse, MessageContent, TruncationStrategy};
 
 /// Parsed server side events stream until an \[DONE\] is received from server.
 pub type RunObjectResponseStream =
@@ -191,13 +191,6 @@ pub struct CreateRunRequest {
     /// If true, returns a stream of events that happen during the Run as server-sent events
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
-}
-
-#[derive(Clone, Serialize, Default, Debug, Deserialize, PartialEq)]
-pub struct TruncationStrategy {
-    #[serde(rename = "type")]
-    pub strategy_type: String,
-    pub last_messages: u64,
 }
 
 #[derive(Clone, Serialize, Default, Debug, Deserialize, PartialEq)]
